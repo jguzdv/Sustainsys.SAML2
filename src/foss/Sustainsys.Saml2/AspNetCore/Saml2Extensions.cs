@@ -71,28 +71,37 @@ public static class Saml2Extensions
         string? displayName,
         Action<Saml2Options> configureOptions)
     {
-        builder.Services.TryAddEnumerable(
-            ServiceDescriptor.Singleton<IPostConfigureOptions<Saml2Options>,
-            Saml2PostConfigureOptions>());
+        builder.Services.AddSaml2CoreServices();
 
         builder.Services.TryAddSingleton<ISamlXmlWriter, SamlXmlWriter>();
 
         // Reader has state for trusted keys, so it has to be transient.
         builder.Services.TryAddTransient<ISamlXmlReader, SamlXmlReader>();
 
-        builder.Services.TryAddEnumerable(
+        return builder.AddRemoteScheme<Saml2Options, Saml2Handler>(authenticationScheme, displayName, configureOptions);
+    }
+
+    /// <summary>
+    /// Add Core Saml2 services that are shared between basic and plus package.
+    /// </summary>
+    /// <param name="services">Service Collection</param>
+    public static void AddSaml2CoreServices(this IServiceCollection services)
+    {
+        services.TryAddEnumerable(
+            ServiceDescriptor.Singleton<IPostConfigureOptions<Saml2Options>,
+            Saml2PostConfigureOptions>());
+        
+        services.TryAddEnumerable(
             ServiceDescriptor.Singleton<IFrontChannelBinding, HttpRedirectBinding>());
-        builder.Services.TryAddEnumerable(
+        services.TryAddEnumerable(
             ServiceDescriptor.Singleton<IFrontChannelBinding, HttpPostBinding>());
 
-        builder.Services.TryAddSingleton<
+        services.TryAddSingleton<
             IValidator<Response, ResponseValidationParameters>, ResponseValidator>();
-        builder.Services.TryAddSingleton<IValidator<Assertion, AssertionValidationParameters>, AssertionValidator>();
-        builder.Services.TryAddSingleton<IClaimsFactory, ClaimsFactory>();
+        services.TryAddSingleton<IValidator<Assertion, AssertionValidationParameters>, AssertionValidator>();
+        services.TryAddSingleton<IClaimsFactory, ClaimsFactory>();
 
-        builder.Services.TryAddSingleton<IMetadadataLoader, MetadataLoader>();
-        builder.Services.TryAddSingleton<IIdentityProviderConfigurationResolver, IdentityProviderConfigurationResolver>();
-
-        return builder.AddRemoteScheme<Saml2Options, Saml2Handler>(authenticationScheme, displayName, configureOptions);
+        services.TryAddSingleton<IMetadadataLoader, MetadataLoader>();
+        services.TryAddSingleton<IIdentityProviderConfigurationResolver, IdentityProviderConfigurationResolver>();
     }
 }

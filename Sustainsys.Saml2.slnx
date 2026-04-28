@@ -4,6 +4,7 @@
   </Folder>
   <Folder Name="/commercial/Tests/">
     <Project Path="src/commercial/Tests/Sustainsys.Saml2.Plus.Tests/Sustainsys.Saml2.Plus.Tests.csproj" />
+    <Project Path="src/commercial/Tests/WebApplicationPlus/WebApplicationPlus.csproj" />
   </Folder>
   <Folder Name="/foss/">
     <Project Path="src/foss/Sustainsys.Saml2/Sustainsys.Saml2.csproj" />

@@ -24,41 +24,59 @@ namespace Sustainsys.Saml2.AspNetCore;
 /// <summary>
 /// Saml2 authentication handler
 /// </summary>
-/// <param name="options">Options</param>
-/// <param name="logger">Logger factory</param>
-/// <param name="encoder">Url encoder</param>
-/// <param name="serviceProvider">Service provider used to resolve services</param>
-public class Saml2Handler(
-    IOptionsMonitor<Saml2Options> options,
-    ILoggerFactory logger,
-    UrlEncoder encoder,
-    IServiceProvider serviceProvider)
-    : RemoteAuthenticationHandler<Saml2Options>(options, logger, encoder)
+
+public class Saml2Handler : RemoteAuthenticationHandler<Saml2Options>
 {
+    /// <summary>Ctor</summary>
+    /// <param name="options">Options</param>
+    /// <param name="logger">Logger factory</param>
+    /// <param name="serviceProvider"> Service provider used to resolve services.</param>
+    /// <remarks>
+    /// Service provider resolver is used instead of injected parameters to improve performance.
+    /// The authentication handlers are created and initialized for every request so services
+    /// are resolved only when they are actually needed.
+    /// </remarks>
+    public Saml2Handler(
+        IOptionsMonitor<Saml2Options> options,
+        ILoggerFactory logger,
+        IServiceProvider serviceProvider)
+        : base(options, logger, UrlEncoder.Default)
+    {
+        ServiceProvider = serviceProvider;
+    }
+
     private const string RequestIdKey = ".reqId";
     private const string IdpKey = ".idp";
     private const string CookiePrefix = "Saml2.";
     private const int StateIdpHashLength = 10;
 
-    // TODO: Make protected virtual and move keyed services to plus package.
-    private TService GetRequiredService<TService>() where TService : notnull =>
-        serviceProvider.GetKeyedService<TService>(Scheme.Name) ??
-        serviceProvider.GetRequiredService<TService>();
-
-    private IEnumerable<IFrontChannelBinding> GetAllFrontChannelBindings() =>
-        serviceProvider.GetKeyedServices<IFrontChannelBinding>(Scheme.Name)
-        .Union(serviceProvider.GetServices<IFrontChannelBinding>());
-
-    private IFrontChannelBinding GetFrontChannelBinding(string uri) =>
-        GetAllFrontChannelBindings().First(b => b.Identifier == uri);
+    /// <summary>
+    /// Service Provider to use for resolving services.
+    /// </summary>
+    protected IServiceProvider ServiceProvider { get; }
 
     /// <summary>
-    /// Resolves events as keyed service from DI, falls back to creating an events instance.
+    /// Gets a required service.
     /// </summary>
-    /// <returns><see cref="Saml2Events"/>Saml2 events instance</returns>
-    protected override Task<object> CreateEventsAsync() => Task.FromResult<object>(
-        serviceProvider.GetKeyedService<Saml2Events>(Scheme.Name) ??
-        new Saml2Events());
+    /// <typeparam name="TService">Type of service</typeparam>
+    /// <returns>Service instance</returns>
+    protected virtual TService GetRequiredService<TService>() where TService: notnull=> 
+        ServiceProvider.GetRequiredService<TService>();
+    
+    private IFrontChannelBinding GetFrontChannelBinding(string uri) =>
+        GetAllFrontChannelBindings().First(b => b.Identifier == uri);
+    
+    /// <summary>
+    /// Get all available front channel bindings.
+    /// </summary>
+    protected virtual IEnumerable<IFrontChannelBinding> GetAllFrontChannelBindings() => 
+        ServiceProvider.GetServices<IFrontChannelBinding>();
+
+    /// <summary>
+    /// Creates an event instance.
+    /// </summary>
+    /// <returns>new Saml2 events instance</returns>
+    protected override Task<object> CreateEventsAsync() => Task.FromResult<object>(new Saml2Events());
 
     /// <summary>
     /// Events represents the easiest and most straight forward way to customize the

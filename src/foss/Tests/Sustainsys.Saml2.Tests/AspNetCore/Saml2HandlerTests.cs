@@ -56,7 +56,6 @@ public class Saml2HandlerTests
         var handler = new Saml2Handler(
             optionsMonitor,
             loggerFactory,
-            UrlEncoder.Default,
             keyedServiceProvider);
 
         FakeTimeProvider timeProvider = new FakeTimeProvider(new(2025, 05, 28, 11, 14, 53, TimeSpan.Zero));
