@@ -30,4 +30,14 @@ public class Saml2Defaults
     /// Default suffix for Callback/Assertion consumer service.
     /// </summary>
     public const string CallbackPathSuffix = "/Acs";
+
+    /// <summary>
+    /// Default maximum message size.
+    /// </summary>
+    public const int MaxMessageSize = 10_000_000;
+
+    /// <summary>
+    /// Default maximum RelayState size.
+    /// </summary>
+    public const int MaxRelayStateSize = 80;
 }

@@ -103,4 +103,27 @@ public static class XmlHelpers
             element.SetAttribute(name, value.Value);
         }
     }
+
+    /// <summary>
+    /// Creates an Xml document with good settings and load the supplied string into it.
+    /// </summary>
+    /// <param name="xml">Encoded xml string to load</param>
+    /// <returns>XmlDocument</returns>
+    public static XmlDocument LoadXml(string xml)
+    {
+        var xr = new XmlTextReader(new StringReader(xml));
+        xr.DtdProcessing = DtdProcessing.Prohibit;
+
+        // All versions of .NET (Core) have secure defaults for XmlDocument,
+        // so no need to set things. We do preserve white space though, to not break
+        // signatures.
+        var xd = new XmlDocument()
+        {
+            PreserveWhitespace = true,
+        };
+
+        xd.Load(xr);
+
+        return xd;
+    }
 }

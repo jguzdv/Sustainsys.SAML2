@@ -17,10 +17,12 @@ public interface IHttpRedirectBinding : IFrontChannelBinding
     /// Unbind from a URL.
     /// </summary>
     /// <param name="url">Url to unbind from</param>
+    /// <param name="bindingOptions">Binding options to use</param>
     /// <param name="getSaml2Entity">Func that returns Identity provider from an entity id</param>
     /// <returns>Unbound message</returns>
     Task<InboundSaml2Message> UnBindAsync(
         string url,
+        BindingOptions bindingOptions,
         Func<string, Task<Saml2Entity>> getSaml2Entity);
 }
 
@@ -44,6 +46,7 @@ public class HttpRedirectBinding : FrontChannelBinding, IHttpRedirectBinding
     /// <inheritdoc/>
     public virtual Task<InboundSaml2Message> UnBindAsync(
         string url,
+        BindingOptions bindingOptions,
         Func<string, Task<Saml2Entity>> getSaml2Entity)
     {
         var uri = new Uri(url);
@@ -78,6 +81,9 @@ public class HttpRedirectBinding : FrontChannelBinding, IHttpRedirectBinding
                 {
                     throw new InvalidOperationException("Duplicate RelayState parameters found");
                 }
+
+                // TODO: Size limit of RelayState
+
                 relayState = param.DecodeValue().ToString();
             }
         }
@@ -104,9 +110,11 @@ public class HttpRedirectBinding : FrontChannelBinding, IHttpRedirectBinding
     /// <inheritdoc/>    
     protected override Task<InboundSaml2Message> DoUnBindAsync(
         HttpRequest httpRequest,
+        BindingOptions bindingOptions,
         Func<string, Task<Saml2Entity>> getSaml2Entity) =>
         UnBindAsync(
             $"{httpRequest.Scheme}://{httpRequest.Host}{httpRequest.PathBase}{httpRequest.Path}{httpRequest.QueryString.Value}",
+            bindingOptions,
             getSaml2Entity);
 
     /// <inheritdoc/>
@@ -149,6 +157,8 @@ public class HttpRedirectBinding : FrontChannelBinding, IHttpRedirectBinding
 
     private static string Inflate(string source)
     {
+        // TODO: Size limit of incoming message.
+
         var compressedBytes = Convert.FromBase64String(Uri.UnescapeDataString(source));
 
         using var compressed = new MemoryStream(compressedBytes);

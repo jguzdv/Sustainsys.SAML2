@@ -90,7 +90,7 @@ public static class Saml2Extensions
         services.TryAddEnumerable(
             ServiceDescriptor.Singleton<IPostConfigureOptions<Saml2Options>,
             Saml2PostConfigureOptions>());
-        
+
         services.TryAddEnumerable(
             ServiceDescriptor.Singleton<IFrontChannelBinding, HttpRedirectBinding>());
         services.TryAddEnumerable(

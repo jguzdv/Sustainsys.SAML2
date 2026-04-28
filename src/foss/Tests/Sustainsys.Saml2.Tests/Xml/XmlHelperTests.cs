@@ -35,4 +35,14 @@ public class XmlHelperTests
             XmlConvert.VerifyNCName(actual).Should().Be(actual);
         }
     }
+
+    [Theory]
+    [InlineData("<!DOCTYPE xxe [<!ENTITY metadata SYSTEM \"https://stubidp.sustainsys.com/Metadata\">]><x>&metadata;</x>")]
+    [InlineData("<!DOCTYPE lolz [<!ENTITY lol1 \"lol\"><!ENTITY lol2 \"&lol1;&lol1;\">]><x>&lol2;</x>")]
+    public void LoadXmlIgnoresXXE(string xml)
+    {
+        Action a = () => XmlHelpers.LoadXml(xml);
+
+        a.Should().Throw<XmlException>().WithMessage("DTD is prohibited*");
+    }
 }

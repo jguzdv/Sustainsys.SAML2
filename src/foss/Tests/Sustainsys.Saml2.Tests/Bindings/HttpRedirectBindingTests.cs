@@ -129,7 +129,7 @@ public class HttpRedirectBindingTests
         Saml2Message actual = default!;
         try
         {
-            actual = await subject.UnBindAsync(url, x => Task.FromResult(new Saml2Entity()));
+            actual = await subject.UnBindAsync(url, new BindingOptions(), x => Task.FromResult(new Saml2Entity()));
         }
         catch (Exception ex)
         {

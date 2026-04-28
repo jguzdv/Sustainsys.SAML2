@@ -28,9 +28,12 @@ public interface IFrontChannelBinding
     /// Unbinds a Saml2 message from an http request.
     /// </summary>
     /// <param name="httpRequest">HttpRequest to unbind from</param>
+    /// <param name="bindingOptions">Binding Options to apply during unbind</param>
     /// <param name="getSaml2Entity">Func that returns a Saml2 entity from an entity id</param>
     /// <returns>Saml2 message</returns>
-    Task<InboundSaml2Message> UnBindAsync(HttpRequest httpRequest,
+    Task<InboundSaml2Message> UnBindAsync(
+        HttpRequest httpRequest,
+        BindingOptions bindingOptions,
         Func<string, Task<Saml2Entity>> getSaml2Entity);
 
     /// <summary>
@@ -80,16 +83,19 @@ public abstract class FrontChannelBinding(string identifier) : IFrontChannelBind
     /// <inheritdoc />
     public Task<InboundSaml2Message> UnBindAsync(
         HttpRequest httpRequest,
+        BindingOptions bindingOptions,
         Func<string, Task<Saml2Entity>> getSaml2Entity) =>
-        DoUnBindAsync(httpRequest, getSaml2Entity);
+        DoUnBindAsync(httpRequest, bindingOptions, getSaml2Entity);
 
     /// <summary>
     /// Unbinds a Saml2 message from an http request.
     /// </summary>
     /// <param name="httpRequest">HttpRequest to unbind from</param>
+    /// <param name="bindingOptions">Binding Options to apply during unbind</param>
     /// <param name="getSaml2Entity">Func that returns a Saml2 entity from an entity id</param>
     /// <returns>Saml2 message</returns>
     protected abstract Task<InboundSaml2Message> DoUnBindAsync(
         HttpRequest httpRequest,
+        BindingOptions bindingOptions,
         Func<string, Task<Saml2Entity>> getSaml2Entity);
 }

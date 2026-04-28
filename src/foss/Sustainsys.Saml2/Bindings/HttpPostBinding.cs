@@ -2,6 +2,8 @@
 // Licensed under the MIT license. See LICENSE in the project root for license information.
 
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Options;
+using Sustainsys.Saml2.AspNetCore;
 using Sustainsys.Saml2.Xml;
 using System.Globalization;
 using System.Text;
@@ -12,13 +14,8 @@ namespace Sustainsys.Saml2.Bindings;
 /// <summary>
 /// Saml Http POST Binding
 /// </summary>
-public class HttpPostBinding : FrontChannelBinding
+public class HttpPostBinding() : FrontChannelBinding(Constants.BindingUris.HttpPOST)
 {
-    /// <summary>
-    /// Constructor
-    /// </summary>
-    public HttpPostBinding() : base(Constants.BindingUris.HttpPOST) { }
-
     /// <inheritdoc/>
     public override bool CanUnBind(HttpRequest httpRequest)
         => httpRequest.Method == "POST"
@@ -28,6 +25,7 @@ public class HttpPostBinding : FrontChannelBinding
     /// <inheritdoc/>
     protected override Task<InboundSaml2Message> DoUnBindAsync(
         HttpRequest httpRequest,
+        BindingOptions bindingOptions,
         Func<string, Task<Saml2Entity>> getSaml2Entity)
     {
         if (!CanUnBind(httpRequest))
@@ -35,8 +33,50 @@ public class HttpPostBinding : FrontChannelBinding
             throw new InvalidOperationException("Cannot unbind from this request. Always call CanUnbind before UnbindAsync to validate.");
         }
 
-        string name;
+        var name = ExtractMessageName(httpRequest);
+        var xml = DecodeMessage(httpRequest, name, bindingOptions);
 
+        // TODO: Size limit of incoming message.
+
+        // TODO: Size limit of RelayState
+
+        var xd = XmlHelpers.LoadXml(xml);
+
+        return Task.FromResult(new InboundSaml2Message
+        {
+            Destination = httpRequest.PathBase + httpRequest.Path,
+            Name = name,
+            RelayState = httpRequest.Form[Constants.RelayState].SingleOrDefault(),
+            Xml = xd.DocumentElement!,
+            Binding = Identifier
+        });
+    }
+
+    private static string DecodeMessage(HttpRequest httpRequest, string name, BindingOptions bindingOptions)
+    {
+        var encoded = httpRequest.Form[name].Single() ?? throw new InvalidOperationException($"No value found for {name}");
+
+        // Base64 encoding gives ~33% length increase
+        if (encoded.Length > bindingOptions.MaxMessageSize + bindingOptions.MaxMessageSize / 3)
+        {
+            throw new InvalidOperationException($"Encoded size of {name} is {encoded.Length} " +
+                $"which is too large for configured max message size of {bindingOptions.MaxMessageSize}");
+        }
+
+        var decoded = Convert.FromBase64String(encoded);
+
+        if (decoded.Length > bindingOptions.MaxMessageSize)
+        {
+            throw new InvalidOperationException($"Decoded size of {name} is {decoded.Length} " +
+                $"which is larger than allowed {bindingOptions.MaxMessageSize}");
+        }
+
+        return Encoding.UTF8.GetString(decoded);
+    }
+
+    private static string ExtractMessageName(HttpRequest httpRequest)
+    {
+        string name;
         if (httpRequest.Form.ContainsKey(Constants.SamlRequest))
         {
             if (httpRequest.Form.ContainsKey(Constants.SamlResponse))
@@ -58,20 +98,7 @@ public class HttpPostBinding : FrontChannelBinding
             }
         }
 
-        // TODO: Size limit of incoming message.
-
-        var xd = new XmlDocument();
-        xd.LoadXml(Encoding.UTF8.GetString(Convert.FromBase64String(httpRequest.Form[name].Single()
-            ?? throw new InvalidOperationException("No form content found"))));
-
-        return Task.FromResult(new InboundSaml2Message
-        {
-            Destination = httpRequest.PathBase + httpRequest.Path,
-            Name = name,
-            RelayState = httpRequest.Form[Constants.RelayState].SingleOrDefault(),
-            Xml = xd.DocumentElement!,
-            Binding = Identifier
-        });
+        return name;
     }
 
     /// <inheritdoc/>

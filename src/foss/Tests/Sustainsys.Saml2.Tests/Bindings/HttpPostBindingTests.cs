@@ -69,7 +69,7 @@ public class HttpPostBindingTests
         Func<string, Task<Saml2Entity>> getEntity = str =>
             Task.FromResult<Saml2Entity>(new IdentityProvider());
 
-        var actual = await subject.UnBindAsync(request, getEntity);
+        var actual = await subject.UnBindAsync(request, new BindingOptions(), getEntity);
 
         var xd = new XmlDocument();
         xd.LoadXml("<xml><a/></xml>");
@@ -84,6 +84,33 @@ public class HttpPostBindingTests
         };
 
         actual.Should().BeEquivalentTo(expected);
+    }
+
+
+    [Fact]
+    public async Task Unbind_Checks_MaxLength()
+    {
+        var request = Substitute.For<HttpRequest>();
+        request.PathBase = "/subdir";
+        request.Path = "/Saml2/Acs";
+        request.Method = "POST";
+        request.Form = new FormCollection(new()
+        {
+            { "SAMLResponse", "PHhtbD48YS8+PGI+PGFhYWFhYWFhYWFhYWEvPjwvYj48L3htbD4=" },
+        });
+
+        var subject = new HttpPostBinding();
+
+        Func<string, Task<Saml2Entity>> getEntity = str =>
+            Task.FromResult<Saml2Entity>(new IdentityProvider());
+
+        BindingOptions bd = new()
+        {
+            MaxMessageSize = 10
+        };
+
+        await subject.Invoking(b => b.UnBindAsync(request, bd, getEntity))
+            .Should().ThrowAsync<InvalidOperationException>().WithMessage("Encoded*");
     }
 
     [Fact]
@@ -104,7 +131,7 @@ public class HttpPostBindingTests
         Func<string, Task<Saml2Entity>> getEntity = str =>
             Task.FromResult<Saml2Entity>(new IdentityProvider());
 
-        await subject.Invoking(s => s.UnBindAsync(request, getEntity))
+        await subject.Invoking(s => s.UnBindAsync(request, new BindingOptions(), getEntity))
             .Should().ThrowAsync<ArgumentException>().WithMessage("*both*");
     }
 }

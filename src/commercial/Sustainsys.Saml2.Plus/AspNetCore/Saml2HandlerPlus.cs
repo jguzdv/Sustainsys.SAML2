@@ -23,7 +23,7 @@ namespace Sustainsys.Saml2.AspNetCore;
 public class Saml2HandlerPlus(
     IOptionsMonitor<Saml2Options> options,
     ILoggerFactory logger,
-    IServiceProvider serviceProvider) 
+    IServiceProvider serviceProvider)
     : Saml2Handler(options, logger, serviceProvider)
 {
     /// <summary>
@@ -34,7 +34,7 @@ public class Saml2HandlerPlus(
     protected override TService GetRequiredService<TService>() =>
         ServiceProvider.GetKeyedService<TService>(Scheme.Name) ??
         ServiceProvider.GetRequiredService<TService>();
-    
+
     /// <summary>
     /// Get all available front channel bindings with any scheme specific bindings first
     /// </summary>

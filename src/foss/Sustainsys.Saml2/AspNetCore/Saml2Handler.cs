@@ -60,16 +60,16 @@ public class Saml2Handler : RemoteAuthenticationHandler<Saml2Options>
     /// </summary>
     /// <typeparam name="TService">Type of service</typeparam>
     /// <returns>Service instance</returns>
-    protected virtual TService GetRequiredService<TService>() where TService: notnull=> 
+    protected virtual TService GetRequiredService<TService>() where TService : notnull =>
         ServiceProvider.GetRequiredService<TService>();
-    
+
     private IFrontChannelBinding GetFrontChannelBinding(string uri) =>
         GetAllFrontChannelBindings().First(b => b.Identifier == uri);
-    
+
     /// <summary>
     /// Get all available front channel bindings.
     /// </summary>
-    protected virtual IEnumerable<IFrontChannelBinding> GetAllFrontChannelBindings() => 
+    protected virtual IEnumerable<IFrontChannelBinding> GetAllFrontChannelBindings() =>
         ServiceProvider.GetServices<IFrontChannelBinding>();
 
     /// <summary>
@@ -130,7 +130,9 @@ public class Saml2Handler : RemoteAuthenticationHandler<Saml2Options>
             return HandleRequestResult.Fail("No binding could find a Saml message in the request");
         }
 
-        var samlMessage = await binding.UnBindAsync(Context.Request,
+        var samlMessage = await binding.UnBindAsync(
+            Context.Request,
+            Options.bindingOptions,
             async str => await GetEffectiveIdentityProviderAsync());
 
         AuthenticationProperties authenticationProperties =

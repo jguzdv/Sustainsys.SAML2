@@ -4,6 +4,7 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http;
+using Sustainsys.Saml2.Bindings;
 using Sustainsys.Saml2.Saml;
 
 namespace Sustainsys.Saml2.AspNetCore;
@@ -30,9 +31,8 @@ public class Saml2Options : RemoteAuthenticationOptions
 
     /// <summary>
     /// Events can be used to override behaviour. Setting this property is the easy way.
-    /// To resolve from DI register Saml2Events as a keyed service with the scheme name
-    /// as the key, or to use the same events for all schemes register as an normal
-    /// service
+    /// To resolve from DI register Saml2Events as a service. For the Saml2 plus package,
+    /// the events can be registered per scheme using a keyed service registration.
     /// </summary>
     public new Saml2Events Events
     {
@@ -70,4 +70,9 @@ public class Saml2Options : RemoteAuthenticationOptions
     /// CookieManager to get chunking support.
     /// </remarks>
     public ICookieManager StateCookieManager { get; set; } = default!;
+
+    /// <summary>
+    /// Options for bindings
+    /// </summary>
+    public BindingOptions bindingOptions { get; set; } = new();
 }

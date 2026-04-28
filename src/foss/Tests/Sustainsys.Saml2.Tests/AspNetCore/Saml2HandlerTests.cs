@@ -178,7 +178,10 @@ public class Saml2HandlerTests
         {
             location.Should().StartWith("https://idp.example.com/sso?SAMLRequest=");
 
-            var message = new HttpRedirectBinding().UnBindAsync(location, _ => throw new NotImplementedException()).Result;
+            var message = new HttpRedirectBinding().UnBindAsync(
+                location,
+                options.bindingOptions,
+                _ => throw new NotImplementedException()).Result;
 
             message.RelayState.Should().Be($"{idpEntityIdHash}.{authnRequest!.Id}");
 
