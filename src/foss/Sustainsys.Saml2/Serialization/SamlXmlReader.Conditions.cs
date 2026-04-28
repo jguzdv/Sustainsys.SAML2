@@ -31,6 +31,7 @@ partial class SamlXmlReader
     /// <param name="conditions">Conditions</param>
     protected virtual void ReadAttributes(XmlTraverser source, Conditions conditions)
     {
+        // TOOD: NotOnOrAfter?
         conditions.NotBefore = source.GetDateTimeAttribute(Attributes.NotBefore);
     }
 

@@ -55,7 +55,7 @@ public class OutboundSaml2Message : Saml2Message
 /// <summary>
 /// An inbound Saml2 message as received by the binding.
 /// </summary>
-public class InboundSaml2Message: Saml2Message
+public class InboundSaml2Message : Saml2Message
 {
     // TODO: Add Trustlevel when implementing Redirect binding signatures.
 }

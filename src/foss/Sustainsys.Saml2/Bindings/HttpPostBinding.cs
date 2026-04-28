@@ -89,6 +89,7 @@ public class HttpPostBinding : FrontChannelBinding
         }
 
         // TODO: Change to use string interpolation instead, it has better performance
+        // TODO: Should RelayState be encoded to avoid XSS?
         var relayStateHtml = string.IsNullOrEmpty(message.RelayState) ? null
             : string.Format(CultureInfo.InvariantCulture, PostHtmlRelayStateFormatString, message.RelayState);
 
