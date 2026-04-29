@@ -6,7 +6,9 @@ using Microsoft.Extensions.Options;
 using Sustainsys.Saml2.AspNetCore;
 using Sustainsys.Saml2.Xml;
 using System.Globalization;
+using System.Net;
 using System.Text;
+using System.Text.Encodings.Web;
 using System.Xml;
 
 namespace Sustainsys.Saml2.Bindings;
@@ -124,14 +126,13 @@ public class HttpPostBinding() : FrontChannelBinding(Constants.BindingUris.HttpP
             xmlDoc.Sign(message.SigningCertificate, issuerElement);
         }
 
-        // TODO: Change to use string interpolation instead, it has better performance
-        // TODO: Should RelayState be encoded to avoid XSS?
+        var escapedRelayState = WebUtility.HtmlEncode(message.RelayState);
+
         var relayStateHtml = string.IsNullOrEmpty(message.RelayState) ? null
-            : string.Format(CultureInfo.InvariantCulture, PostHtmlRelayStateFormatString, message.RelayState);
+            : string.Format(CultureInfo.InvariantCulture, PostHtmlRelayStateFormatString, escapedRelayState);
 
         var encodedXml = Convert.ToBase64String(Encoding.UTF8.GetBytes(xmlDoc.OuterXml));
 
-        // TODO: Change to use string interpolation instead, it has better performance
         var content = string.Format(
                     CultureInfo.InvariantCulture,
                     PostHtmlFormatString,
@@ -144,12 +145,11 @@ public class HttpPostBinding() : FrontChannelBinding(Constants.BindingUris.HttpP
         await httpResponse.WriteAsync(content);
     }
 
-    private const string PostHtmlRelayStateFormatString = @"
-<input type=""hidden"" name=""RelayState"" value=""{0}""/>";
+    private readonly CompositeFormat PostHtmlRelayStateFormatString = CompositeFormat.Parse(@"
+<input type=""hidden"" name=""RelayState"" value=""{0}""/>");
 
-    // TODO: Is xml marker and doctype needed? Bindings 3.5.4 requires XHTML.
-
-    private const string PostHtmlFormatString = @"<?xml version=""1.0"" encoding=""UTF-8""?>
+    private readonly CompositeFormat PostHtmlFormatString =
+        CompositeFormat.Parse(@"<?xml version=""1.0"" encoding=""UTF-8""?>
 <!DOCTYPE html PUBLIC ""-//W3C//DTD XHTML 1.1//EN""
 ""http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"">
 <html xmlns=""http://www.w3.org/1999/xhtml"" xml:lang=""en"">
@@ -165,8 +165,7 @@ you must press the Continue button once to proceed.
 </noscript>
 <form action=""{0}"" method=""post"" name=""sustainsysSamlPostBindingSubmit"">
 <div>{1}
-<input type=""hidden"" name=""{2}""
-value=""{3}""/>
+<input type=""hidden"" name=""{2}"" value=""{3}""/>
 </div>
 <noscript>
 <div>
@@ -178,6 +177,6 @@ value=""{3}""/>
 document.forms.sustainsysSamlPostBindingSubmit.submit();
 </script>
 </body>
-</html>";
+</html>");
 
 }

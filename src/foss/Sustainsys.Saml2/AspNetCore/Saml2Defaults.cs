@@ -34,7 +34,7 @@ public class Saml2Defaults
     /// <summary>
     /// Default maximum message size.
     /// </summary>
-    public const int MaxMessageSize = 10_000_000;
+    public const int MaxMessageSize = 1_000_000;
 
     /// <summary>
     /// Default maximum RelayState size.

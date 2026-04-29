@@ -4,6 +4,8 @@
 using Microsoft.AspNetCore.Http;
 using NSubstitute;
 using Sustainsys.Saml2.Bindings;
+using Sustainsys.Saml2.Xml;
+using System.IO.Pipelines;
 using System.Xml;
 
 namespace Sustainsys.Saml2.Tests.Bindings;
@@ -160,5 +162,33 @@ public class HttpPostBindingTests
 
         await subject.Invoking(s => s.UnBindAsync(request, new BindingOptions(), getEntity))
             .Should().ThrowAsync<ArgumentException>().WithMessage("*both*");
+    }
+
+    [Fact]
+    public async Task Bind()
+    {
+        var subject = new HttpPostBinding();
+
+        HttpContext httpContext = new DefaultHttpContext();
+        httpContext.Response.Body = new MemoryStream();
+
+        OutboundSaml2Message msg = new()
+        {
+            Xml = XmlHelpers.LoadXml("<x />").DocumentElement!,
+            Binding = "uri:ignored",
+            Destination = "https://destination.example.com",
+            Name = "WHATEVERNAME",
+            RelayState = "Foo&\"Bar\""
+        };
+
+        await subject.BindAsync(httpContext.Response, msg);
+
+        httpContext.Response.Body.Position = 0;
+        using var reader = new StreamReader(httpContext.Response.Body);
+
+        var html = reader.ReadToEnd();
+
+        html.Should().Contain("name=\"WHATEVERNAME\" value=\"PHggLz4=\"");
+        html.Should().Contain("name=\"RelayState\" value=\"Foo&amp;&quot;Bar&quot;\"");
     }
 }
