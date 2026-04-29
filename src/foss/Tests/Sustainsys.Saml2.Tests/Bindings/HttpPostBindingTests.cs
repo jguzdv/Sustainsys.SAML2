@@ -88,7 +88,7 @@ public class HttpPostBindingTests
 
 
     [Fact]
-    public async Task Unbind_Checks_MaxLength()
+    public async Task Unbind_Checks_ResponseMaxLength()
     {
         var request = Substitute.For<HttpRequest>();
         request.PathBase = "/subdir";
@@ -111,6 +111,33 @@ public class HttpPostBindingTests
 
         await subject.Invoking(b => b.UnBindAsync(request, bd, getEntity))
             .Should().ThrowAsync<InvalidOperationException>().WithMessage("Encoded*");
+    }
+
+    [Fact]
+    public async Task Unbind_Checks_RelayStateMaxLength()
+    {
+        var request = Substitute.For<HttpRequest>();
+        request.PathBase = "/subdir";
+        request.Path = "/Saml2/Acs";
+        request.Method = "POST";
+        request.Form = new FormCollection(new()
+        {
+            { "SAMLResponse", "PHhtbD48YS8+PC94bWw+" },
+            { "RelayState", "ABC123" }
+        });
+
+        var subject = new HttpPostBinding();
+
+        Func<string, Task<Saml2Entity>> getEntity = str =>
+            Task.FromResult<Saml2Entity>(new IdentityProvider());
+
+        BindingOptions bd = new()
+        {
+            MaxRelayStateSize = 5
+        };
+
+        await subject.Invoking(b => b.UnBindAsync(request, bd, getEntity))
+            .Should().ThrowAsync<InvalidOperationException>().WithMessage("RelayState length*");
     }
 
     [Fact]

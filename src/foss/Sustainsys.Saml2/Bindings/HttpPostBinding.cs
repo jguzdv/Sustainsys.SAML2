@@ -35,10 +35,7 @@ public class HttpPostBinding() : FrontChannelBinding(Constants.BindingUris.HttpP
 
         var name = ExtractMessageName(httpRequest);
         var xml = DecodeMessage(httpRequest, name, bindingOptions);
-
-        // TODO: Size limit of incoming message.
-
-        // TODO: Size limit of RelayState
+        var relayState = ExtractRelayState(httpRequest, bindingOptions);
 
         var xd = XmlHelpers.LoadXml(xml);
 
@@ -46,10 +43,22 @@ public class HttpPostBinding() : FrontChannelBinding(Constants.BindingUris.HttpP
         {
             Destination = httpRequest.PathBase + httpRequest.Path,
             Name = name,
-            RelayState = httpRequest.Form[Constants.RelayState].SingleOrDefault(),
+            RelayState = relayState,
             Xml = xd.DocumentElement!,
             Binding = Identifier
         });
+    }
+
+    private static string? ExtractRelayState(HttpRequest httpRequest, BindingOptions bindingOptions)
+    {
+        var relayState = httpRequest.Form[Constants.RelayState].SingleOrDefault();
+
+        if (relayState != null && relayState.Length > bindingOptions.MaxRelayStateSize)
+        {
+            throw new InvalidOperationException($"RelayState length of {relayState.Length} exceeds maximum allowed {bindingOptions.MaxRelayStateSize}");
+        }
+
+        return relayState;
     }
 
     private static string DecodeMessage(HttpRequest httpRequest, string name, BindingOptions bindingOptions)
