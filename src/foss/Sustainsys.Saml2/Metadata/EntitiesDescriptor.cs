@@ -19,9 +19,4 @@ public class EntitiesDescriptor : MetadataBase
     /// Nested EntityDescriptor entries.
     /// </summary>
     public List<EntityDescriptor> EntityDescriptors { get; } = [];
-
-    /// <summary>
-    /// Nested EntitiesDescriptors.
-    /// </summary>
-    public List<EntitiesDescriptor> EntitiesDescriptors { get; } = [];
 }
