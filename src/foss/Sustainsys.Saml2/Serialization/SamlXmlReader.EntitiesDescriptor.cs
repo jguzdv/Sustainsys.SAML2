@@ -81,34 +81,29 @@ partial class SamlXmlReader
             source.MoveNext(false);
         }
 
-        // Now we're at the actual role descriptors - or possibly an AffiliationDescriptor.
-        bool wasRoleDescriptor = true; // Assume the best.
+        // Now we're at the actual entity descriptors - or possibly another EntitiesDescriptor.
+        bool wasEntityDescriptor = true; // Assume the best.
         do
         {
             if (source.EnsureNamespace(Namespaces.MetadataUri))
             {
                 switch (source.CurrentNode?.LocalName)
                 {
-                    case Elements.EntitiesDescriptor:
-                        entitiesDescriptor.EntitiesDescriptors.Add(ReadEntitiesDescriptor(source));
-                        break;
                     case Elements.EntityDescriptor:
                         entitiesDescriptor.EntityDescriptors.Add(ReadEntityDescriptor(source));
                         break;
-                    case Elements.SPSSODescriptor:
-                    case Elements.AuthnAuthorityDescriptor:
-                    case Elements.AttributeAuthorityDescriptor:
-                    case Elements.PDPDescriptor:
+                    // TODO: Support nested EntitiesDescriptor.
+                    case Elements.EntitiesDescriptor:
                         source.IgnoreChildren();
                         break;
                     default:
-                        wasRoleDescriptor = false; // Nope, something else.
+                        wasEntityDescriptor = false; // Nope, something else.
                         break;
                 }
             }
-        } while (wasRoleDescriptor && source.MoveNext(true));
+        } while (wasEntityDescriptor && source.MoveNext(true));
 
-        // There can be more data after the role descriptors that we currently do not support, skip them.
+        // There can be more data after the entity descriptors that we currently do not support, skip them.
         source.Skip();
     }
 }
