@@ -57,4 +57,38 @@ public partial class SamlXmlWriterTests
 
         actual.Should().BeEquivalentTo(expected);
     }
+
+    [Fact]
+    public void WriteAuthnRequest_IncludeExtension()
+    {
+        var document = new XmlDocument();
+        var extensionNode = document.CreateElement("test", "urn:test");
+
+        AuthnRequest authnRequest = new()
+        {
+            IssueInstant = new(2025, 01, 05, 15, 00, 00),
+            Extensions = new Common.Extensions
+            {
+                Contents = new List<object>
+                {
+                    extensionNode
+                }
+            }
+        };
+
+        var subject = new SamlXmlWriter();
+
+        var actual = subject.Write(authnRequest);
+
+        var xml =
+            $"<samlp:AuthnRequest xmlns:samlp=\"urn:oasis:names:tc:SAML:2.0:protocol\" " +
+            $"ID=\"{authnRequest.Id}\" IssueInstant=\"2025-01-05T15:00:00Z\" Version=\"2.0\">" +
+            $"<samlp:Extensions><test xmlns=\"urn:test\"/></samlp:Extensions>" +
+            $"</samlp:AuthnRequest>";
+
+        var expected = new XmlDocument();
+        expected.LoadXml(xml);
+
+        actual.Should().BeEquivalentTo(expected);
+    }
 }
