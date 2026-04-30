@@ -268,7 +268,8 @@ public class Saml2Handler : RemoteAuthenticationHandler<Saml2Options>
             Name = Constants.SamlRequest,
             Xml = xmlDoc.DocumentElement!,
             RelayState = $"{idpEntityIdHash}.{authnRequest.Id}",
-            Binding = Constants.BindingUris.HttpRedirect
+            Binding = Constants.BindingUris.HttpRedirect,
+            SigningCertificate = Options.SigningCertificate
         };
 
         // TODO: If needed: make an alternative to this to allow multiple concurrent sign in attempts to same Idp

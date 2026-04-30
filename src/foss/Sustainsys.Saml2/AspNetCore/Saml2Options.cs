@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http;
 using Sustainsys.Saml2.Bindings;
 using Sustainsys.Saml2.Saml;
+using System.Security.Cryptography.X509Certificates;
 
 namespace Sustainsys.Saml2.AspNetCore;
 
@@ -75,4 +76,9 @@ public class Saml2Options : RemoteAuthenticationOptions
     /// Options for bindings
     /// </summary>
     public BindingOptions bindingOptions { get; set; } = new();
+
+    /// <summary>
+    /// Signing certificate for the service provider. This is used to sign AuthnRequests and logout requests.
+    /// </summary>
+    public X509Certificate2? SigningCertificate { get; set; }
 }

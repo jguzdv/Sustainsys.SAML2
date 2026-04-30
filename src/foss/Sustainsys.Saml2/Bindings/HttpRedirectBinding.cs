@@ -4,6 +4,10 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.WebUtilities;
 using System.IO.Compression;
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
+using System.Security.Cryptography.Xml;
+using System.Text;
 using System.Xml;
 
 namespace Sustainsys.Saml2.Bindings;
@@ -122,6 +126,11 @@ public class HttpRedirectBinding : FrontChannelBinding, IHttpRedirectBinding
     {
         var queryString = GetQueryString(message);
 
+        if (message.SigningCertificate is not null)
+        {
+            queryString = AddSignature(queryString, message);
+        }
+
         var location = $"{message.Destination}{queryString}";
 
         httpResponse.Redirect(location);
@@ -141,6 +150,24 @@ public class HttpRedirectBinding : FrontChannelBinding, IHttpRedirectBinding
         var encoded = Deflate(xmlString);
 
         return $"?{message.Name}={encoded}&RelayState={message.RelayState}";
+    }
+
+    private static string AddSignature(string queryString, OutboundSaml2Message message)
+    {
+        var signatureAlgorithm = SignedXml.XmlDsigRSASHA256Url;
+        var queryStringToSign = $"{queryString}&SigAlg={Uri.EscapeDataString(signatureAlgorithm)}";
+
+        HashAlgorithm sha256 = SHA256.Create();
+        sha256.ComputeHash(Encoding.UTF8.GetBytes(queryStringToSign));
+
+        AsymmetricSignatureFormatter formatter = new RSAPKCS1SignatureFormatter(
+            message.SigningCertificate!.GetRSAPrivateKey()!
+        );
+
+        var signedValue = formatter.CreateSignature(sha256);
+        var signatureText = Convert.ToBase64String(signedValue);
+
+        return $"{queryStringToSign}&Signature={Uri.EscapeDataString(signatureText)}";
     }
 
     private static string Deflate(string source)
