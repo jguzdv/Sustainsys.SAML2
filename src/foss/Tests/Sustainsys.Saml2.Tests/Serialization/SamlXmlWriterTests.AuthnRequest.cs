@@ -67,6 +67,7 @@ public partial class SamlXmlWriterTests
         AuthnRequest authnRequest = new()
         {
             IssueInstant = new(2025, 01, 05, 15, 00, 00),
+            Issuer = new("https://sp.example.com/Metadata"),
             Extensions = new Common.Extensions
             {
                 Contents = new List<object>
@@ -84,6 +85,7 @@ public partial class SamlXmlWriterTests
         var xml =
             $"<samlp:AuthnRequest xmlns:samlp=\"urn:oasis:names:tc:SAML:2.0:protocol\" " +
             $"ID=\"{authnRequest.Id}\" IssueInstant=\"2025-01-05T15:00:00Z\" Version=\"2.0\">" +
+            $"<saml:Issuer xmlns:saml=\"{Constants.Namespaces.SamlUri}\">https://sp.example.com/Metadata</saml:Issuer>" +
             $"<samlp:Extensions>" +
             $"<test xmlns=\"urn:test\"/>" +
             $"<test2 xmlns=\"urn:test\"/>" +
