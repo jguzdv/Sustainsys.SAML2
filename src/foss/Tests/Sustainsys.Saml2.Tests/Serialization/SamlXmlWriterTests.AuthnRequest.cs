@@ -61,9 +61,9 @@ public partial class SamlXmlWriterTests
     [Fact]
     public void WriteAuthnRequest_IncludeExtension()
     {
+        // The document is needed to create XmlElement instances for the extensions.
         var document = new XmlDocument();
-        var extensionNode = document.CreateElement("test", "urn:test");
-
+        
         AuthnRequest authnRequest = new()
         {
             IssueInstant = new(2025, 01, 05, 15, 00, 00),
@@ -71,7 +71,8 @@ public partial class SamlXmlWriterTests
             {
                 Contents = new List<object>
                 {
-                    extensionNode
+                    document.CreateElement("test", "urn:test"),
+                    document.CreateElement("test2", "urn:test")
                 }
             }
         };
@@ -83,7 +84,10 @@ public partial class SamlXmlWriterTests
         var xml =
             $"<samlp:AuthnRequest xmlns:samlp=\"urn:oasis:names:tc:SAML:2.0:protocol\" " +
             $"ID=\"{authnRequest.Id}\" IssueInstant=\"2025-01-05T15:00:00Z\" Version=\"2.0\">" +
-            $"<samlp:Extensions><test xmlns=\"urn:test\"/></samlp:Extensions>" +
+            $"<samlp:Extensions>" +
+            $"<test xmlns=\"urn:test\"/>" +
+            $"<test2 xmlns=\"urn:test\"/>" +
+            $"</samlp:Extensions>" +
             $"</samlp:AuthnRequest>";
 
         var expected = new XmlDocument();
